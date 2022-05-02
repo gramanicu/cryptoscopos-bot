@@ -105,6 +105,8 @@ export const create = async (
             const competition = await prisma.competition.create({
                 data: {
                     name: name,
+                    announcedFinish: false,
+                    channelId: interaction.channelId,
                     startMoney: starting_money,
                     hoursDuration: duration,
                     ending: DateTime.now().plus({ hours: duration }).toJSDate(),

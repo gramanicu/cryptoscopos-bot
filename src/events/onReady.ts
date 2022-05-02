@@ -11,13 +11,18 @@ export const onReady = async (BOT: Client) => {
 
     const commandData = CommandList.map((command) => command.data.toJSON());
 
-    await rest.put(
-        Routes.applicationGuildCommands(
-            BOT.user?.id || "missing id",
-            "755414823726219314"
-        ),
-        { body: commandData }
-    );
+    // For testing
+    // await rest.put(
+    //     Routes.applicationGuildCommands(
+    //         BOT.user?.id || "missing id",
+    //         "755414823726219314"
+    //     ),
+    //     { body: commandData }
+    // );
+
+    await rest.put(Routes.applicationCommands(BOT.user?.id || "missing id"), {
+        body: commandData,
+    });
 
     checkForWinner(BOT);
 

@@ -26,7 +26,7 @@ export const onReady = async (BOT: Client) => {
 
     checkForWinner(BOT);
 
-    const res = BOT.guilds.cache.map(async (guild) => {
+    BOT.guilds.cache.map(async (guild) => {
         const existing = await prisma.server.findFirst({
             where: {
                 discord_id: guild.id,

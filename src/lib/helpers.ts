@@ -1,4 +1,4 @@
-import { Account, Coin, CoinStats, Transaction, User } from "../interfaces/Api";
+import { Account, Coin, CoinStats, Transaction } from "../interfaces/Api";
 import { callApi, callApiAsPrivateUser } from "./api";
 import { getCoinFromStash } from "./stashes";
 import prisma from "./prismaClient";
@@ -107,10 +107,11 @@ export const computeCompetitionWinner = async (
     if (competitionAggregate) {
         let maxValue = 0;
         let winnerId = "";
+        // eslint-disable-next-line prefer-const
         let finalParticipants: ParticipantFinish[] = [];
 
         for (const p of competitionAggregate.participants) {
-            let final: ParticipantFinish = {
+            const final: ParticipantFinish = {
                 participant: p,
                 isWinner: false,
                 finalBalance: p.balance,
@@ -253,7 +254,7 @@ export const tradeAccount = async (
             (transaction.amount > 0 && balance - price >= 0) ||
             (transaction.amount < 0 && acc_amount + transaction.amount >= 0)
         ) {
-            const new_part = await prisma.participant.update({
+            await prisma.participant.update({
                 where: {
                     id: participant.id,
                 },

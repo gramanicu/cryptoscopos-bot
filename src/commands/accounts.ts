@@ -1,23 +1,18 @@
-import {
-    ModalBuilder,
-    SlashCommandBuilder,
-    TextInputBuilder,
-} from "@discordjs/builders";
+import { SlashCommandBuilder } from "@discordjs/builders";
 import {
     MessageEmbed,
     MessageSelectMenu,
     MessageActionRow,
     SelectMenuInteraction,
     MessageComponentInteraction,
-    MessageButton,
 } from "discord.js";
 import { DateTime } from "luxon";
 import config from "../config/env";
 import { Command } from "../interfaces/Command";
 import prisma from "../lib/prismaClient";
 import { Competition, Participant } from "@prisma/client";
-import { CommandInteraction, ButtonInteraction } from "discord.js";
-import { callApi, callApiAsPrivateUser } from "../lib/api";
+import { CommandInteraction } from "discord.js";
+import { callApiAsPrivateUser } from "../lib/api";
 import { Account, Coin } from "../interfaces/Api";
 import { getCoinFromStash } from "../lib/stashes";
 import { computeAccountValue, tradeAccount } from "../lib/helpers";
@@ -30,7 +25,6 @@ const addCommand = async (interaction: CommandInteraction): Promise<void> => {
     const identifier = interaction.options.getString("identifier");
 
     const serverId = interaction.guildId as string;
-    const userId = interaction.user.id;
     try {
         const server = await prisma.server.findFirst({
             where: { discord_id: serverId },
@@ -45,7 +39,7 @@ const addCommand = async (interaction: CommandInteraction): Promise<void> => {
 
             const accounts = JSON.parse(res) as Account[];
             if (accounts) {
-                for (let acc of accounts) {
+                for (const acc of accounts) {
                     const coin = (await getCoinFromStash(acc.coinId)) as Coin;
                     acc.coin = coin;
                 }
@@ -140,7 +134,6 @@ const tradeCommand = async (interaction: CommandInteraction): Promise<void> => {
     const amount = interaction.options.getNumber("amount") as number;
 
     const serverId = interaction.guildId as string;
-    const userId = interaction.user.id;
     try {
         const server = await prisma.server.findFirst({
             where: { discord_id: serverId },

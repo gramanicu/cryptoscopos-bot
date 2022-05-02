@@ -4,7 +4,6 @@ import {
     CommandInteraction,
     MessageActionRow,
     MessageButton,
-    MessageComponentInteraction,
     ButtonInteraction,
 } from "discord.js";
 import { DateTime } from "luxon";
@@ -12,7 +11,6 @@ import config from "../config/env";
 import { Coin, CoinSearchResult, CoinStats } from "../interfaces/Api";
 import { Command } from "../interfaces/Command";
 import { callApi } from "../lib/api";
-import crypto from "crypto";
 import { redis } from "../lib/redisClient";
 
 /**

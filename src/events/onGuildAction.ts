@@ -1,4 +1,4 @@
-import { Client, Guild } from "discord.js";
+import { Guild } from "discord.js";
 import prisma from "../lib/prismaClient";
 
 export const onGuildCreate = async (guild: Guild) => {

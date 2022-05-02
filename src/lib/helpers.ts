@@ -5,6 +5,7 @@ import prisma from "./prismaClient";
 import { Participant } from "@prisma/client";
 import { Client, TextChannel, MessageEmbed } from "discord.js";
 import { DateTime } from "luxon";
+import config from "../config/env";
 
 export const checkForWinner = async (client: Client) => {
     // Run every 5 minutes
@@ -58,7 +59,9 @@ export const checkForWinner = async (client: Client) => {
                     place++;
                 }
 
-                embed.addField("Leaderboard", leaderboard);
+                embed
+                    .addField("Leaderboard", leaderboard)
+                    .setColor(config.accent_color);
 
                 const newComp = await prisma.competition.update({
                     where: {

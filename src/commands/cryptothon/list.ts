@@ -1,19 +1,38 @@
+import { Competition } from "@prisma/client";
 import { CommandInteraction, MessageEmbed } from "discord.js";
+import { DateTime } from "luxon";
 import config from "../../config/env";
 import prisma from "../../lib/prismaClient";
 
 export const list = async (interaction: CommandInteraction): Promise<void> => {
+    const include_ended = interaction.options.getBoolean(
+        "include_ended"
+    ) as boolean;
+
     try {
         const server = await prisma.server.findFirst({
             where: { discord_id: interaction.guildId as string },
         });
 
         if (server) {
-            const competitions = await prisma.competition.findMany({
-                where: {
-                    serverId: server.id,
-                },
-            });
+            let competitions: Competition[];
+
+            if (include_ended) {
+                competitions = await prisma.competition.findMany({
+                    where: {
+                        serverId: server.id,
+                    },
+                });
+            } else {
+                competitions = await prisma.competition.findMany({
+                    where: {
+                        serverId: server.id,
+                        ending: {
+                            gt: DateTime.now().toJSDate(),
+                        },
+                    },
+                });
+            }
 
             const embed = new MessageEmbed()
                 .setTitle(`The cryptothons of this server are:`)
@@ -25,6 +44,10 @@ export const list = async (interaction: CommandInteraction): Promise<void> => {
                     "ID: `" + competition.id + "`"
                 );
             });
+
+            if (competitions.length === 0) {
+                embed.setTitle("No competitions");
+            }
 
             await interaction.editReply({
                 embeds: [embed],

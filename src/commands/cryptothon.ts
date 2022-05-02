@@ -9,11 +9,13 @@ import { view } from "./cryptothon/view";
 export const cryptothon: Command = {
     data: new SlashCommandBuilder()
         .setName("cryptothon")
-        .setDescription("Crypto trading competitions")
+        .setDescription("Crypto trading competitions, specific to a server.")
         .addSubcommand((subcommand) => {
             return subcommand
                 .setName("create")
-                .setDescription("Create a new Cryptothon")
+                .setDescription(
+                    "Create a new Cryptothon. The winners will be announced on this channel"
+                )
                 .addStringOption((option) => {
                     return option
                         .setName("name")
@@ -26,7 +28,7 @@ export const cryptothon: Command = {
                         .setMinValue(1)
                         .setMaxValue(720)
                         .setDescription(
-                            "How many hours will it last? (max 720h)"
+                            "How many hours will it last? (max 720h)."
                         )
                         .setRequired(true);
                 })
@@ -44,7 +46,15 @@ export const cryptothon: Command = {
         .addSubcommand((subcommand) => {
             return subcommand
                 .setName("list")
-                .setDescription("List all ongoing cryptothons");
+                .setDescription("List all cryptothons created on this server")
+                .addBooleanOption((option) => {
+                    return option
+                        .setName("include_ended")
+                        .setDescription(
+                            "If cryptothons that already ended should be listed"
+                        )
+                        .setRequired(true);
+                });
         })
         .addSubcommand((subcommand) => {
             return subcommand

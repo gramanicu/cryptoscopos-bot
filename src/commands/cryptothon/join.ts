@@ -1,4 +1,6 @@
 import { CommandInteraction, MessageEmbed } from "discord.js";
+import { User } from "../../interfaces/Api";
+import { callApiAsPrivateUser } from "../../lib/api";
 import prisma from "../../lib/prismaClient";
 
 export const join = async (interaction: CommandInteraction): Promise<void> => {
@@ -39,9 +41,28 @@ export const join = async (interaction: CommandInteraction): Promise<void> => {
                     });
 
                     if (newUser !== null) {
-                        await interaction.editReply({
-                            content: `You have joined the ${competition.name} cryptothon`,
+                        const res = await callApiAsPrivateUser(
+                            "POST",
+                            `/private-user/create`,
+                            newUser.id
+                        );
+
+                        const ext_user = JSON.parse(res) as User;
+
+                        const final = await prisma.participant.update({
+                            where: {
+                                id: newUser.id,
+                            },
+                            data: {
+                                external_id: ext_user.id,
+                            },
                         });
+
+                        if (final !== null) {
+                            await interaction.editReply({
+                                content: `You have joined the ${competition.name} cryptothon`,
+                            });
+                        }
                         return;
                     }
                 }

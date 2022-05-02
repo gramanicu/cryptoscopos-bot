@@ -4,6 +4,7 @@ import { CommandList } from "../commands/_CommandList";
 import { Routes } from "discord-api-types/v9";
 import config from "../config/env";
 import prisma from "../lib/prismaClient";
+import { checkForWinner } from "../lib/helpers";
 
 export const onReady = async (BOT: Client) => {
     const rest = new REST({ version: "9" }).setToken(config.bot_token);
@@ -17,6 +18,8 @@ export const onReady = async (BOT: Client) => {
         ),
         { body: commandData }
     );
+
+    checkForWinner(BOT);
 
     const res = BOT.guilds.cache.map(async (guild) => {
         const existing = await prisma.server.findFirst({

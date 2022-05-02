@@ -4,17 +4,16 @@ import {
     CommandInteraction,
     MessageActionRow,
     MessageButton,
-    Interaction,
     MessageComponentInteraction,
+    ButtonInteraction,
 } from "discord.js";
 import { DateTime } from "luxon";
 import config from "../config/env";
 import { Coin, CoinSearchResult, CoinStats } from "../interfaces/Api";
 import { Command } from "../interfaces/Command";
 import { callApi } from "../lib/api";
-import { ButtonInteraction } from "discord.js";
+import crypto from "crypto";
 import { redis } from "../lib/redisClient";
-import { start } from "repl";
 
 /**
  * Searches for a specific coin (or multiple coins matching the search_term)
@@ -67,7 +66,8 @@ const getSearchResults = async (
  */
 const searchEmbed = async (
     results: CoinSearchResult[],
-    currPage = 1
+    currPage = 1,
+    uniqueId: string
 ): Promise<[MessageEmbed, MessageActionRow | null]> => {
     const embed = new MessageEmbed()
         .setTitle("Search results")
@@ -89,7 +89,7 @@ const searchEmbed = async (
 
         if (currPage > 1) {
             prevButton = new MessageButton()
-                .setCustomId("info-prev-page")
+                .setCustomId(`info-prev-page${uniqueId}`)
                 .setLabel("←")
                 .setStyle("PRIMARY");
             row.addComponents(prevButton);
@@ -97,7 +97,7 @@ const searchEmbed = async (
 
         if (currPage < Math.ceil(results.length / 5.0)) {
             nextButton = new MessageButton()
-                .setCustomId("info-next-page")
+                .setCustomId(`info-next-page${uniqueId}`)
                 .setLabel("→")
                 .setStyle("PRIMARY");
             row.addComponents(nextButton);
@@ -121,7 +121,7 @@ const search = async (interaction: CommandInteraction): Promise<void> => {
     try {
         const searchId = interaction.id;
         const data = await getSearchResults(search_term, searchId);
-        const [embed, row] = await searchEmbed(data, 1);
+        const [embed, row] = await searchEmbed(data, 1, searchId);
 
         if (row) {
             await interaction.editReply({
@@ -136,8 +136,13 @@ const search = async (interaction: CommandInteraction): Promise<void> => {
 
         // If was send in channel, we can add buttons for the pagination
         if (interaction.channel && data.length > 5) {
-            const filter = (i: MessageComponentInteraction) =>
-                i.user.id === interaction.user.id;
+            const filter = (i: ButtonInteraction) => {
+                return (
+                    i.user.id === interaction.user.id &&
+                    (i.customId === `info-next-page${searchId}` ||
+                        i.customId === `info-prev-page${searchId}`)
+                );
+            };
 
             const collector =
                 interaction.channel.createMessageComponentCollector({
@@ -155,14 +160,19 @@ const search = async (interaction: CommandInteraction): Promise<void> => {
             });
 
             collector.on("collect", async (i) => {
-                if (i.customId === "info-next-page") {
+                if (i.replied === true) return;
+                if (i.customId.startsWith("info-next-page")) {
                     if (!i.deferred) {
                         await i.deferUpdate();
                     }
 
                     page += 1;
                     const data = await getSearchResults(search_term, searchId);
-                    const [embed, row] = await searchEmbed(data, page);
+                    const [embed, row] = await searchEmbed(
+                        data,
+                        page,
+                        searchId
+                    );
 
                     await i.editReply({
                         embeds: [embed],
@@ -172,14 +182,18 @@ const search = async (interaction: CommandInteraction): Promise<void> => {
                     collector.resetTimer();
                 }
 
-                if (i.customId === "info-prev-page") {
+                if (i.customId.startsWith("info-prev-page")) {
                     if (!i.deferred) {
                         await i.deferUpdate();
                     }
 
                     page -= 1;
                     const data = await getSearchResults(search_term, searchId);
-                    const [embed, row] = await searchEmbed(data, page);
+                    const [embed, row] = await searchEmbed(
+                        data,
+                        page,
+                        searchId
+                    );
 
                     await i.editReply({
                         embeds: [embed],

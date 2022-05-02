@@ -67,4 +67,42 @@ const callApi = async (
     }
 };
 
-export { callApi };
+const callApiAsPrivateUser = async (
+    method: string,
+    url: string,
+    user_id: string,
+    data?: object
+): Promise<string> => {
+    let manageToken = "";
+    if (await redis.exists(tokenKey)) {
+        manageToken = String(await redis.get(tokenKey));
+    } else {
+        await updateManageToken();
+        manageToken = String(await redis.get(tokenKey));
+    }
+
+    let res: AxiosResponse;
+    try {
+        res = await axios.request({
+            method,
+            url,
+            baseURL: `https://${config.api_url}`,
+            headers: {
+                private_id: user_id,
+                authorization: `Bearer ${manageToken}`,
+            },
+            data,
+        });
+
+        return JSON.stringify(res.data);
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            // or just re-throw the error
+            throw error;
+        } else {
+            throw new Error("different error than axios");
+        }
+    }
+};
+
+export { callApi, callApiAsPrivateUser };

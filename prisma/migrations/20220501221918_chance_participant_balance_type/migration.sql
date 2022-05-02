@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "participants" ALTER COLUMN "balance" SET DATA TYPE DOUBLE PRECISION;

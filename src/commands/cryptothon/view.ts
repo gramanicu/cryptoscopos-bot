@@ -37,13 +37,22 @@ export const view = async (interaction: CommandInteraction): Promise<void> => {
                         "Participants",
                         `${competition.participants.length}`,
                         true
-                    )
-                    .addField(
-                        "Ends on: ",
-                        DateTime.now()
-                            .plus({ hours: competition.hoursDuration })
-                            .toLocaleString(DateTime.DATETIME_SHORT)
                     );
+
+                if (competition.ending > DateTime.now().toJSDate()) {
+                    embed.addField(
+                        "Ends on: ",
+                        DateTime.fromJSDate(competition.ending).toLocaleString(
+                            DateTime.DATETIME_SHORT
+                        )
+                    );
+                } else {
+                    embed.setDescription(
+                        `Ended on: ${DateTime.fromJSDate(
+                            competition.ending
+                        ).toLocaleString(DateTime.DATETIME_SHORT)}`
+                    );
+                }
 
                 await interaction.editReply({
                     embeds: [embed],

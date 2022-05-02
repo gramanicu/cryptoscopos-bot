@@ -10,6 +10,8 @@ import config from "../../config/env";
 import prisma from "../../lib/prismaClient";
 import { ButtonInteraction } from "discord.js";
 import { Competition } from "@prisma/client";
+import { callApiAsPrivateUser } from "../../lib/api";
+import { User } from "../../interfaces/Api";
 
 const buttonName = "cryptothon-create-join-button";
 
@@ -17,7 +19,7 @@ const joinButtonInteraction = async (
     interaction: ButtonInteraction,
     competition: Competition
 ): Promise<void> => {
-    if (interaction.customId === buttonName) {
+    if (interaction.customId.startsWith(buttonName)) {
         try {
             const participant = await prisma.participant.findFirst({
                 where: {
@@ -39,19 +41,50 @@ const joinButtonInteraction = async (
                     },
                 });
 
-                if (newUser !== null) {
-                    await interaction.reply({
-                        content: `User ${interaction.user} joined the ${competition.name} cryptothon`,
+                if (newUser) {
+                    const res = await callApiAsPrivateUser(
+                        "POST",
+                        `/private-user/create`,
+                        newUser.id
+                    );
+
+                    const ext_user = JSON.parse(res) as User;
+
+                    const final = await prisma.participant.update({
+                        where: {
+                            id: newUser.id,
+                        },
+                        data: {
+                            external_id: ext_user.id,
+                        },
                     });
-                    return;
+
+                    if (final !== null) {
+                        await interaction.reply({
+                            content: `You have joined the ${competition.name} cryptothon`,
+                            ephemeral: true,
+                        });
+                        return;
+                    }
                 }
             }
         } catch (err) {
-            console.log(err);
+            const embed = new MessageEmbed()
+                .setTitle("Couldn't sign up")
+                .setColor("RED")
+                .setDescription("Internal bot error")
+                .setTimestamp(Date.now());
+
+            if (!interaction.replied) {
+                await interaction.reply({ embeds: [embed], ephemeral: true });
+            }
+            return;
         }
     }
 
-    interaction.deferUpdate();
+    if (!interaction.deferred) {
+        await interaction.deferUpdate();
+    }
 };
 
 export const create = async (
@@ -74,6 +107,7 @@ export const create = async (
                     name: name,
                     startMoney: starting_money,
                     hoursDuration: duration,
+                    ending: DateTime.now().plus({ hours: duration }).toJSDate(),
                     server: {
                         connect: {
                             id: server.id,
@@ -83,7 +117,7 @@ export const create = async (
             });
 
             const joinButton = new MessageButton()
-                .setCustomId(buttonName)
+                .setCustomId(`${buttonName}${interaction.id}`)
                 .setLabel("Join")
                 .setStyle("PRIMARY");
 
@@ -94,9 +128,9 @@ export const create = async (
                 .addField("Starting funds: ", `${competition.startMoney}$`)
                 .addField(
                     "Ends on: ",
-                    DateTime.now()
-                        .plus({ hours: competition.hoursDuration })
-                        .toLocaleString(DateTime.DATETIME_SHORT)
+                    DateTime.fromJSDate(competition.ending).toLocaleString(
+                        DateTime.DATETIME_SHORT
+                    )
                 )
                 .setTimestamp(Date.now());
 
@@ -107,15 +141,19 @@ export const create = async (
             });
 
             if (interaction.channel) {
+                // All users should be allowed to join
                 const filter = (i: MessageComponentInteraction) =>
-                    i.user.id === interaction.user.id;
+                    i.customId === `${buttonName}${interaction.id}`;
 
                 const collector =
                     interaction.channel.createMessageComponentCollector({
                         filter,
-                        time: Duration.fromDurationLike({
-                            hours: competition.hoursDuration,
-                        }).toMillis(),
+                        time: Math.min(
+                            Duration.fromDurationLike({
+                                hours: competition.hoursDuration,
+                            }).toMillis(),
+                            86400000
+                        ),
                         componentType: "BUTTON",
                     });
 

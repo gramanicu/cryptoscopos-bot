@@ -9,6 +9,7 @@ interface Coin {
     coingeckoId: string;
     symbol: string;
     name: string;
+    id?: string;
 }
 
 interface CoinStats {
@@ -21,4 +22,27 @@ interface CoinStats {
     last_30day: number | "unavailable";
 }
 
-export { CoinSearchResult, Coin, CoinStats };
+interface User {
+    private_id: string;
+    id: string;
+}
+
+interface Account {
+    coinId: string;
+    userId: string;
+    id: string;
+
+    coin?: Coin;
+}
+
+interface Transaction {
+    id: string;
+    timestamp: string;
+    amount: number;
+    value: number;
+    accountId: string;
+
+    account?: Account;
+}
+
+export { CoinSearchResult, Coin, CoinStats, User, Account, Transaction };

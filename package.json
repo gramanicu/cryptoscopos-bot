@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "start": "node prod/src/index.js",
+        "start": "node prod/index.js",
         "build": "tsc --build",
         "clean": "tsc --build --clean",
         "postinstall": "npx prisma generate && npm run build",

@@ -37,43 +37,45 @@ export const checkForWinner = async (client: Client) => {
                 comp.channelId
             )) as TextChannel;
 
-            const winnerUser = await client.users.fetch(
-                winner.participant.user_id
-            );
+            if (winner) {
+                const winnerUser = await client.users.fetch(
+                    winner.participant.user_id
+                );
 
-            if (channel) {
-                const embed = new MessageEmbed()
-                    .setTitle(`The "${comp.name}" cryptothon ended`)
-                    .setDescription(
-                        `${winnerUser} won it, with a final balance of ${winner.finalBalance}$`
-                    );
+                if (channel) {
+                    const embed = new MessageEmbed()
+                        .setTitle(`The "${comp.name}" cryptothon ended`)
+                        .setDescription(
+                            `${winnerUser} won it, with a final balance of ${winner.finalBalance}$`
+                        );
 
-                let leaderboard = "";
-                let place = 1;
-                for (const p of participants) {
-                    const user = await client.users.fetch(
-                        p.participant.user_id
-                    );
+                    let leaderboard = "";
+                    let place = 1;
+                    for (const p of participants) {
+                        const user = await client.users.fetch(
+                            p.participant.user_id
+                        );
 
-                    leaderboard += `${place}. ${user} with ${p.finalBalance}$\n`;
-                    place++;
-                }
+                        leaderboard += `${place}. ${user} with ${p.finalBalance}$\n`;
+                        place++;
+                    }
 
-                embed
-                    .addField("Leaderboard", leaderboard)
-                    .setColor(config.accent_color);
+                    embed
+                        .addField("Leaderboard", leaderboard)
+                        .setColor(config.accent_color);
 
-                const newComp = await prisma.competition.update({
-                    where: {
-                        id: comp.id,
-                    },
-                    data: {
-                        announcedFinish: true,
-                    },
-                });
+                    const newComp = await prisma.competition.update({
+                        where: {
+                            id: comp.id,
+                        },
+                        data: {
+                            announcedFinish: true,
+                        },
+                    });
 
-                if (newComp) {
-                    channel.send({ embeds: [embed] });
+                    if (newComp) {
+                        channel.send({ embeds: [embed] });
+                    }
                 }
             }
         }

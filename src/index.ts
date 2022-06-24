@@ -3,11 +3,8 @@ import { IntentOptions } from "./config/IntentOptions";
 import { onGuildCreate, onGuildDelete } from "./events/onGuildAction";
 import { onInteraction } from "./events/onInteraction";
 import { onReady } from "./events/onReady";
-import { updateCoinStash } from "./lib/stashes";
 
 (async () => {
-    updateCoinStash();
-
     const bot = new Client({ intents: IntentOptions });
 
     bot.on("ready", async () => await onReady(bot));

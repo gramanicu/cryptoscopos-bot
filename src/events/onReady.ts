@@ -5,20 +5,12 @@ import { Routes } from "discord-api-types/v9";
 import config from "../config/env";
 import prisma from "../lib/prismaClient";
 import { checkForWinner } from "../lib/helpers";
+import { updateCoinStash } from "../lib/stashes";
 
 export const onReady = async (BOT: Client) => {
+    updateCoinStash();
     const rest = new REST({ version: "9" }).setToken(config.bot_token);
-
     const commandData = CommandList.map((command) => command.data.toJSON());
-
-    // For testing
-    // await rest.put(
-    //     Routes.applicationGuildCommands(
-    //         BOT.user?.id || "missing id",
-    //         "755414823726219314"
-    //     ),
-    //     { body: commandData }
-    // );
 
     await rest.put(Routes.applicationCommands(BOT.user?.id || "missing id"), {
         body: commandData,
